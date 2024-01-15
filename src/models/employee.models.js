@@ -6,9 +6,9 @@ const employeeSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    role: {
+    scrumRole: {
       type: String,
-      emum: ["admin", "project manager", "team lead", "developer", "tester"],
+      emum: ["admin", "project owner", "scrum master", "scrum team", "tester"],
       required: true,
     },
     department: {
@@ -16,14 +16,14 @@ const employeeSchema = new Schema(
       emum: ["admin", "manager", "development", "testing"],
       required: true,
     },
-    currentProject: {
-      type: Schema.Types.ObjectId,
-      ref: "Project",
-    },
-    previousProject: {
-      type: [Schema.Types.ObjectId],
-      ref: "Project",
-    },
+    // currentProject: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: "Project",
+    // },
+    // previousProject: {
+    //   type: [Schema.Types.ObjectId],
+    //   ref: "Project",
+    // },
   },
   {
     timestamps: true,
