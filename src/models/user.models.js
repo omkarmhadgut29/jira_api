@@ -1,4 +1,6 @@
 import mongoose, { Schema } from "mongoose";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
@@ -15,13 +17,32 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: true,
-      unique: true,
     },
     fullname: {
       type: String,
     },
     refreshToken: {
       type: String,
+    },
+    scrumRole: {
+      type: String,
+      emum: [
+        "admin",
+        "projectOwner",
+        "scrumMaster",
+        "scrumTeam",
+        "tester",
+        "user",
+      ],
+      default: "user",
+    },
+    department: {
+      type: String,
+      emum: ["admin", "manager", "development", "testing"],
+    },
+    createdByUser: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {
@@ -48,6 +69,8 @@ userSchema.methods.generateAccessToken = async function () {
     _id: this._id,
     username: this.username,
     email: this.email,
+    scrumRole: this.scrumRole,
+    department: this.department,
   };
 
   return jwt.sign(tokenData, process.env.ACCESS_TOKEN_SECRETE_KEY, {
@@ -60,6 +83,8 @@ userSchema.methods.generateRefreshToken = async function () {
     _id: this._id,
     username: this.username,
     email: this.email,
+    scrumRole: this.scrumRole,
+    department: this.department,
   };
 
   return jwt.sign(tokenData, process.env.REFRESH_TOKEN_SECRETE_KEY, {

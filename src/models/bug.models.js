@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const storySchema = new Schema(
+const bugSchema = new Schema(
   {
     title: {
       type: String,
@@ -10,22 +10,16 @@ const storySchema = new Schema(
       type: String,
       required: true,
     },
-    sprint: {
-      type: Schema.Types.ObjectId,
-      ref: "Sprint",
-    },
     createdByUser: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    assignees: {
-      type: [Schema.Types.ObjectId],
-      ref: "User",
+    task: {
+      type: Schema.Types.ObjectId,
+      ref: "Task",
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-export const Story = mongoose.model("Story", storySchema);
+export const Bug = mongoose.model("Bug", bugSchema);

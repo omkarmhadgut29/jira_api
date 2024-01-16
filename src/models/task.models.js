@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const sprintSchema = new Schema(
+const taskSchema = new Schema(
   {
     title: {
       type: String,
@@ -10,15 +10,15 @@ const sprintSchema = new Schema(
       type: String,
       required: true,
     },
-    project: {
-      type: Schema.Types.ObjectId,
-      ref: "Project",
-    },
-    createdByOwner: {
+    createdByUser: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    assigneeMasters: {
+    story: {
+      type: Schema.Types.ObjectId,
+      ref: "Story",
+    },
+    assignees: {
       type: [Schema.Types.ObjectId],
       ref: "User",
     },
@@ -28,4 +28,4 @@ const sprintSchema = new Schema(
   }
 );
 
-export const Sprint = mongoose.model("Sprint", sprintSchema);
+export const Task = mongoose.model("Task", taskSchema);
