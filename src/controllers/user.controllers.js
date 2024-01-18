@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
 import { adminUsers } from "../constants.js";
 import { User } from "../models/user.models.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -17,6 +19,7 @@ const generateAccessAndRefreshToken = async (userId) => {
       refreshToken,
     };
   } catch (error) {
+    console.log(error);
     throw new Error("Something went wrong...");
   }
 };
@@ -55,6 +58,55 @@ const loginUser = async (req, res) => {
   return res.status(200).json({
     message: "User Loged In Successfully...",
     user: loggedInUser,
+    accessToken,
+    refreshToken,
+  });
+};
+
+const logoutUser = async (req, res) => {
+  const reqUser = req.user;
+
+  const user = await User.findById(reqUser._id);
+
+  user.refreshToken = "";
+
+  await user.save();
+
+  return res.status(200).json({
+    message: "Logout successfully.",
+  });
+};
+
+const refreshAccessToken = async (req, res) => {
+  const userRefreshToken = req.body.refreshToken;
+
+  if (!userRefreshToken) {
+    return res.status(401).json({ message: "Unauthorised access..." });
+  }
+
+  const decodedToken = jwt.verify(
+    userRefreshToken,
+    process.env.REFRESH_TOKEN_SECRETE_KEY
+  );
+
+  const user = await User.findOne({ _id: decodedToken._id });
+
+  if (!user) {
+    return res.status(401).json({ message: "Invalid refresh token." });
+  }
+
+  if (userRefreshToken !== user?.refreshToken) {
+    user.refreshToken = "";
+    await user.save();
+
+    return res.status(401).json({ message: "Refresh token expries or used" });
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+
+  return res.status(200).json({
     accessToken,
     refreshToken,
   });
@@ -123,7 +175,7 @@ const registerUser = async (req, res) => {
   //     .json({ message: "User created successfully.", userData });
 };
 
-const getAddedUsers = async (req, res) => {
+const getUsersAddedByAdmin = async (req, res) => {
   const reqUser = req.user;
 
   if (!reqUser) {
@@ -157,4 +209,82 @@ const getAllUsers = async (req, res) => {
   });
 };
 
-export { loginUser, registerUser, getAddedUsers, getAllUsers };
+const getAdmins = async (req, res) => {
+  const users = await User.find({
+    scrumRole: { $in: Object.values(adminUsers) },
+  });
+
+  if (!users || users?.length < 1) {
+    return res.status(404).json({ message: "users not found..." });
+  }
+
+  return res.status(200).json({
+    message: "success",
+    users,
+  });
+};
+
+const updateScrumRoleOrDepartment = async (req, res) => {
+  const reqUser = req.user;
+  const { _id, scrumRole, department } = req.body;
+
+  if (
+    !_id ||
+    !reqUser ||
+    !(reqUser?.scrumRole in ["projectOwner", "admin"]) ||
+    (!scrumRole && !department) ||
+    (scrumRole?.trim() === "" && department?.trim() === "")
+  ) {
+    return res.status(401).json({
+      message: "Invalid request...",
+    });
+  }
+
+  const user = await User.findById(_id);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found..." });
+  }
+
+  if (
+    user.scrumRole in ["projectOwner", "admin"] &&
+    reqUser.scrumRole === "projectOwner"
+  ) {
+    return res.status(401).json({
+      message: "Unauthorisd access..",
+    });
+  }
+  if (user?.createdByUser) {
+    if (!(user?.createdByUser === reqUser._id)) {
+      return res.status(401).json({
+        message: "Unauthorised access",
+      });
+    }
+  }
+
+  if (scrumRole) {
+    user.scrumRole = scrumRole;
+  }
+
+  if (department) {
+    user.department = department;
+  }
+
+  await user.save();
+
+  return res.status(201).json({
+    message: "User data updated.",
+    user,
+  });
+};
+
+export {
+  loginUser,
+  logoutUser,
+  registerUser,
+  refreshAccessToken,
+  getUsersAddedByAdmin,
+  getAllUsers,
+  getAdmins,
+  updateScrumRoleOrDepartment,
+};
