@@ -1,4 +1,7 @@
-import { addProjectService } from "../services/project.services.js";
+import {
+  addProjectService,
+  getProjectsService,
+} from "../services/project.services.js";
 
 const addProject = async (req, res) => {
   const reqUser = req.user;
@@ -42,4 +45,24 @@ const addProject = async (req, res) => {
   });
 };
 
-export { addProject };
+const getProjects = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({
+      message: "Unauthorised request...",
+    });
+  }
+  const response = await getProjectsService();
+
+  if (response.message === "error") {
+    return res.status(response?.status || 500).json({
+      error: response?.error || "Internal server error...",
+    });
+  }
+
+  return res.status(response?.status || 201).json({
+    message: response?.message || "Success",
+    data: response?.data || response,
+  });
+};
+
+export { addProject, getProjects };
